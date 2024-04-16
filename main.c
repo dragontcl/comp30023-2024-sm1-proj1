@@ -66,6 +66,7 @@ int main(int argc, char **argv) {
         strcpy(process->name, token);
         token = strtok(NULL, " ");
         process->runTime = (int)strtol(token, NULL, BASE_10);
+        process->remainingTime =  process->runTime;
         token = strtok(NULL, " ");
         process->memorySize = (int)strtol(token, NULL, BASE_10);
         addNodeToEnd(process, process_list);

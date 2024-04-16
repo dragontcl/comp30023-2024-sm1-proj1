@@ -86,11 +86,9 @@ void removeNode(process_t *process, processLL_t *list) {
 void printLL(processLL_t *list) {
     processNode_t *currentNode = list->head;
     while(currentNode != NULL) {
-        printf("Process Name: %s | ", currentNode->process->name);
-        printf("Arrival Time: %d | ", currentNode->process->arrivalTime);
-        printf("Run Time: %d | ", currentNode->process->runTime);
-        printf("Completed Time: %d | ", currentNode->process->completedTime);
-        printf("Memory Size: %d KB\n", currentNode->process->memorySize);
+        printf("Process Name: %s | Arrival Time: %d | Run Time: %d | Completed Time: %d | Memory Size: %d KB\n",
+               currentNode->process->name, currentNode->process->arrivalTime, currentNode->process->runTime,
+               currentNode->process->completedTime, currentNode->process->memorySize);
         currentNode = currentNode->next;
     }
 }

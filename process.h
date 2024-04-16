@@ -16,6 +16,7 @@ typedef struct process{
   int arrivalTime;
   char name [MAX_NAME_LENGTH];
   int runTime;
+  int remainingTime;
   int completedTime;
   int memorySize; //in KB
   status_t status;
