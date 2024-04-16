@@ -1,9 +1,9 @@
-#include "process.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
+#include "process.h"
+#include "memScheduler.h"
 #define BASE_10 10
 #define EXIT_FAILURE 1
 #define EXIT_SUCCESS 0
@@ -64,13 +64,15 @@ int main(int argc, char **argv) {
         process->arrivalTime = (int)strtol(token, NULL, BASE_10);
         token = strtok(NULL, " ");
         strcpy(process->name, token);
+        token = strtok(NULL, " ");
         process->runTime = (int)strtol(token, NULL, BASE_10);
         token = strtok(NULL, " ");
         process->memorySize = (int)strtol(token, NULL, BASE_10);
         addNodeToEnd(process, process_list);
+
     }
     if(strcmp(memoryType, "infinite") == 0) {
-
+        rrInfiniteMem(process_list,quantum);
     }
     if(strcmp(memoryType, "first-fit") == 0) {
 

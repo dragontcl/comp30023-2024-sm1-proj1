@@ -18,6 +18,7 @@ typedef struct process{
   int runTime;
   int completedTime;
   int memorySize; //in KB
+  status_t status;
 } process_t;
 
 typedef struct processNode {
