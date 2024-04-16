@@ -91,6 +91,7 @@ void destroyLL(processLL_t *list) {
         processNode_t *currentNode = list->head;
         while(currentNode != NULL) {
                 processNode_t *nextNode = currentNode->next;
+                free(currentNode->process);
                 free(currentNode);
                 currentNode = nextNode;
         }

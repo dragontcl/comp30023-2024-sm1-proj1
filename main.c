@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     }
     free(line);
     if(strcmp(memoryType, "infinite") == 0) {
-        //rrInfiniteMem(process_list,quantum);
+        rrInfiniteMem(process_list,quantum);
     }
     if(strcmp(memoryType, "first-fit") == 0) {
 
