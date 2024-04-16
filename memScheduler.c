@@ -72,9 +72,8 @@ void rrInfiniteMem(processLL_t *processQueue, int quantum) {
         findProcessAndInsert(processQueue, runningProcesses, clock);
         if (!isEmpty(runningProcesses)) {
             processNode_t *currentNode = runningProcesses->head;
-            int timeSlice = (currentNode->process->remainingTime < quantum)
-            ? currentNode->process->remainingTime
-            : quantum;
+            int timeSlice = quantum; // Always use full quantum time
+
             if (lastRunningProcess != currentNode->process) {
                 printf("%d,RUNNING,process-name=%s,remaining-time=%d\n",
                        clock, currentNode->process->name, currentNode->process->remainingTime);
@@ -111,4 +110,3 @@ void rrInfiniteMem(processLL_t *processQueue, int quantum) {
     printf("Time overhead %.2f %.2f\n", MaxOverheadTime(finishedProcesses) ,avgOverheadTime(finishedProcesses));
     printf("Makespan: %d\n", clock);
 }
-
