@@ -57,8 +57,7 @@ int main(int argc, char **argv) {
     processLL_t* process_list = createLL();
     // read file into process list
     while(getline(&line, &len, fp) != -1){
-        //read line into process
-        // 0 P4 30 16 <- Arrival time, process name, run time, memory sizeS
+        // read line into process
         process_t *process = (process_t *)malloc(sizeof(process_t));
         const char * token = strtok(line, " ");
         process->arrivalTime = (int)strtol(token, NULL, BASE_10);
@@ -70,10 +69,10 @@ int main(int argc, char **argv) {
         token = strtok(NULL, " ");
         process->memorySize = (int)strtol(token, NULL, BASE_10);
         addNodeToEnd(process, process_list);
-
     }
+    free(line);
     if(strcmp(memoryType, "infinite") == 0) {
-        rrInfiniteMem(process_list,quantum);
+        //rrInfiniteMem(process_list,quantum);
     }
     if(strcmp(memoryType, "first-fit") == 0) {
 
@@ -84,6 +83,6 @@ int main(int argc, char **argv) {
     if(strcmp(memoryType, "virtual") == 0) {
 
     }
-    //load all process into ready queue
+    destroyLL(process_list);
     return EXIT_SUCCESS;
 }

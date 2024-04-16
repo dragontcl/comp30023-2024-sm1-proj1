@@ -6,14 +6,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// TESTED
 processLL_t *createLL() {
     processLL_t* ll = malloc(sizeof(processLL_t));
     ll->head = NULL;
     ll->tail = NULL;
     return ll;
 }
-// TESTED
 void addNodeToStart(process_t *process, processLL_t *list) {
     processNode_t *node = malloc(sizeof(processNode_t));//create a node
     node->process = process;
@@ -23,7 +21,6 @@ void addNodeToStart(process_t *process, processLL_t *list) {
         list->tail = node;
     }
 }
-// TESTED
 void addNodeToEnd(process_t *process, processLL_t *list) {
     processNode_t *node = malloc(sizeof(processNode_t));//create a node
     node->process = process;
@@ -37,7 +34,6 @@ void addNodeToEnd(process_t *process, processLL_t *list) {
         list->tail = node;
     }
 }
-
 void moveNodeToEnd(process_t *process, processLL_t *list) {
         processNode_t *currentNode = list->head;
         processNode_t *previousNode = NULL;
@@ -82,7 +78,6 @@ void removeNode(process_t *process, processLL_t *list) {
         currentNode = currentNode->next;
     }
 }
-
 void printLL(processLL_t *list) {
     processNode_t *currentNode = list->head;
     while(currentNode != NULL) {
@@ -93,7 +88,13 @@ void printLL(processLL_t *list) {
     }
 }
 void destroyLL(processLL_t *list) {
-
+        processNode_t *currentNode = list->head;
+        while(currentNode != NULL) {
+                processNode_t *nextNode = currentNode->next;
+                free(currentNode);
+                currentNode = nextNode;
+        }
+        free(list);
 }
 
 int isEmpty(processLL_t *list) {

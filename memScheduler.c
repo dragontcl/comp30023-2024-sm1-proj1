@@ -62,7 +62,6 @@ int avgTurnAroundTime(const processLL_t *finishedProcesses) {
     return (int)ceil((double)totalTurnAroundTime / totalProcesses);
 }
 
-
 void rrInfiniteMem(processLL_t *processQueue, int quantum) {
     processLL_t *runningProcesses = createLL();
     processLL_t *finishedProcesses = createLL();
@@ -109,4 +108,6 @@ void rrInfiniteMem(processLL_t *processQueue, int quantum) {
     printf("Turnaround time: %d\n", avgTurnAroundTime(finishedProcesses));
     printf("Time overhead %.2f %.2f\n", MaxOverheadTime(finishedProcesses) ,avgOverheadTime(finishedProcesses));
     printf("Makespan: %d\n", clock);
+    destroyLL(runningProcesses);
+    destroyLL(finishedProcesses);
 }
