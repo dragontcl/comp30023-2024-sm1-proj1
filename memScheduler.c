@@ -1,41 +1,77 @@
 #include "memScheduler.h"
 #include <stdio.h>
-int isEmpty(processLL_t *list);
+#include <math.h>
 
-// used to find next ready process in queue
+
 void findProcessAndInsert(processLL_t *processQueue, processLL_t *runningProcesses, int clock) {
     processNode_t *currentNode = processQueue->head;
     processNode_t *nextNode = NULL;
     while (currentNode != NULL) {
         nextNode = currentNode->next;
         if (currentNode->process->arrivalTime == clock) {
-            printf("Process Name: %s | ", currentNode->process->name);
-            printf("Arrival Time: %d | ", currentNode->process->arrivalTime);
-            printf("Run Time: %d | ", currentNode->process->runTime);
-            printf("Completed Time: %d | ", currentNode->process->completedTime);
-            printf("Memory Size: %d KB\n", currentNode->process->memorySize);
+            //TEST TO SEE IF PROCESS GETS FOUND
+            //printf("Process Name: %s | Arrival Time: %d | Run Time: %d | Completed Time: %d | Memory Size: %d KB\n",
+            //      currentNode->process->name, currentNode->process->arrivalTime, currentNode->process->runTime,
+            //      currentNode->process->completedTime, currentNode->process->memorySize);
             addNodeToStart(currentNode->process, runningProcesses);
             removeNode(currentNode->process, processQueue);
         }
         currentNode = nextNode;
     }
 }
-
-void rrInfiniteMem(processLL_t *processQueue, int quantum) {
-    processLL_t* runningProcesses = createLL();
-    processLL_t* finishedProcesses = createLL();
-    int clock = 0;
-
-    while (clock < 200) {
-        findProcessAndInsert(processQueue, runningProcesses, clock);
-
-        clock++;
+int avgTurnAroundTime(processLL_t *finishedProcesses) {
+    int totalTurnAroundTime = 0;
+    int totalProcesses = 0;
+    processNode_t *currentNode = finishedProcesses->head;
+    while (currentNode != NULL) {
+        totalTurnAroundTime += currentNode->process->completedTime - currentNode->process->arrivalTime;
+        totalProcesses++;
+        currentNode = currentNode->next;
     }
-    printf("is empty pq %d\n", isEmpty(processQueue));
-    printf("is empty rp %d\n", isEmpty(runningProcesses));
+    return (int)ceil((double)totalTurnAroundTime / totalProcesses);
 }
 
+void rrInfiniteMem(processLL_t *processQueue, int quantum) {
+    processLL_t *runningProcesses = createLL();
+    processLL_t *finishedProcesses = createLL();
+    processNode_t *lastRunningProcess = NULL;
+    int clock = 0, timeSlice = 0;
+    while (!isEmpty(processQueue) || !isEmpty(runningProcesses)) {
+        findProcessAndInsert(processQueue, runningProcesses, clock);
+        if (!isEmpty(runningProcesses)) {
+            processNode_t *currentNode = runningProcesses->head;
+            timeSlice = (currentNode->process->runTime < quantum) ? currentNode->process->runTime : quantum;
+            if (lastRunningProcess != currentNode->process) {
+                printf("%d,RUNNING,process-name=%s,remaining-time=%d\n",
+                       clock,currentNode->process->name, currentNode->process->runTime);
+                lastRunningProcess = currentNode->process;
+            }
+            currentNode->process->runTime -= timeSlice;
+            if (currentNode->process->runTime <= 0) {
+                currentNode->process->completedTime = clock + timeSlice;
+                printf("%d,FINISHED,process-name=%s",
+                      currentNode->process->completedTime,  currentNode->process->name);
+                int remainingProcesses = 0;
+                processNode_t *node = runningProcesses->head;
+                while (node) {
+                    if (node->process->runTime > 0) {
+                        remainingProcesses++;
+                    }
+                    node = node->next;
+                }
+                printf(",proc-remaining=%d\n", remainingProcesses);
+                addNodeToEnd(currentNode->process, finishedProcesses);
+                removeNode(currentNode->process, runningProcesses);
+                lastRunningProcess = NULL;
+            } else {
+                moveNodeToEnd(currentNode->process, runningProcesses);
+            }
+            clock += timeSlice;
+        } else {
+            clock++;
+        }
+    }
+    printf("Turnaround time: %d\n", avgTurnAroundTime(finishedProcesses));
 
-int isEmpty(processLL_t *list) {
-    return list->head == NULL;
+    printf("Makespan: %d\n", clock);
 }

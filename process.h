@@ -38,6 +38,6 @@ void moveNodeToEnd(process_t *process, processLL_t *list);
 void removeNode(process_t *process, processLL_t *list);
 void printLL(processLL_t *list);
 void destroyLL(processLL_t *list);
-void test();
+int isEmpty(processLL_t *list);
 
 #endif //PROCESS_H
