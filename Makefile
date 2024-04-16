@@ -1,7 +1,14 @@
-EXE=allocate
+# Define C compiler & flags
+CC = gcc
+CFLAGS = -Wall -g
+SRC = main.c process.c memScheduler.c
+OBJ = $(SRC:.c=.o)
+EXE = allocate
+all: $(EXE)
+# The first executable
+$(EXE): $(OBJ)
+	$(CC) $(CFLAGS) -o $(EXE) $(OBJ) $(LDLIBS)
+# Clean up artifacts
+clean:
+	rm -f $(OBJ) $(EXE) $(EXE2)
 
-$(EXE): main.c
-	cc -Wall -o $(EXE) $<
-
-format:
-	clang-format -style=file -i *.c
