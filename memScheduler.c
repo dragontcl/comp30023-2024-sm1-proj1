@@ -2,11 +2,13 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #define MAXIMUM_MEMORY 2048
 int findProcessAndInsert(processLL_t *process_list, processLL_t *running_list, const int clock) {
     int found = 0;
     processNode_t *currentNode = process_list->head;
+    processNode_t *headRunning = running_list->head;
     processNode_t *prevNode = NULL;
     processNode_t *lastInserted = NULL;
     while (currentNode != NULL) {
@@ -36,6 +38,20 @@ int findProcessAndInsert(processLL_t *process_list, processLL_t *running_list, c
     }
     if (lastInserted != NULL && lastInserted->next == NULL) {
         running_list->tail = lastInserted;
+    }
+    return found;
+}
+int findProcessAndInsertAtEnd(processLL_t *process_list, processLL_t *running_list, const int clock, const int quantum) {
+    int found = 0;
+    const processNode_t *currentNode = process_list->head;
+    while(currentNode != NULL) {
+        const processNode_t *nextNode = currentNode->next;
+        if(currentNode->process->arrivalTime <= clock+quantum) {
+            found = 1;
+            addNodeToEnd(currentNode->process, running_list);
+            removeNode(currentNode->process, process_list);
+        }
+        currentNode = nextNode;
     }
     return found;
 }
@@ -82,22 +98,32 @@ void rrInfiniteMem(processLL_t *process_list, const int quantum) {
     const process_t *lastRunningProcess = NULL;
     int clock = 0;
     while (!isEmpty(process_list) || !isEmpty(runningProcesses)) {
-        if(findProcessAndInsert(process_list, runningProcesses, clock)) {
-            printf("NEW PROCESS GOT INSERTED\n");
+        //if(findProcessAndInsert(process_list, runningProcesses, clock)) {
+            //printf("NEW PROCESS GOT INSERTED\n");
+        //}
+        if(findProcessAndInsertAtEnd(process_list, runningProcesses, clock, quantum)) {
+            //printf("NEW PROCESS GOT INSERTED\n");
         }
         const int timeSlice = quantum; // Always use full quantum time
         // there are processes that can be ran in the round robin scheduler
         if (!isEmpty(runningProcesses)) {
             // get the first process in the list
             const processNode_t *currentNode = runningProcesses->head;
+            while (currentNode != NULL && currentNode->process->arrivalTime > clock) {
+                currentNode = currentNode->next;  // Skip processes not yet arrived
+            }
+            if (currentNode == NULL) {
+                clock += timeSlice;
+                continue;
+            }
             currentNode->process->status = RUNNING; // allow process to run
             // print on context switch
             if(currentNode->process->status == RUNNING) {
-                if (lastRunningProcess != currentNode->process) {
+                //if (lastRunningProcess != currentNode->process) {
                     printf("%d,RUNNING,process-name=%s,remaining-time=%d\n",
                            clock, currentNode->process->name, currentNode->process->remainingTime);
-                    lastRunningProcess = currentNode->process;
-                }
+                    //lastRunningProcess = currentNode->process;
+                //}
                 currentNode->process->remainingTime -= timeSlice;
             }
             // check if process is finished && is running
@@ -169,15 +195,33 @@ int firstFitDeallocate(process_t* process, int memory[]) {
     process->memory.status = UNALLOCATED;
     return 1;
 }
-
+int calculateUsedMemory(int memory[]) {
+    int usedMemory = 0;
+    for (int i = 0; i < MAXIMUM_MEMORY; i++) {
+        if (memory[i] == 1) {
+            usedMemory++;
+        }
+    }
+    double percentage = ((double) usedMemory / MAXIMUM_MEMORY) * 100.0;
+    return (int)(percentage + 0.5); //do some casting magic to round
+}
 void rrFirstFitMem(processLL_t *process_list, const int quantum) {
+    int memory[MAXIMUM_MEMORY];
+    // initialize memory to 0
+    for (int i = 0; i < MAXIMUM_MEMORY; i++) {
+        memory[i] = 0;
+    }
     processLL_t *runningProcesses = createLL();
     processLL_t *finishedProcesses = createLL();
+    processLL_t *testProcess = createLL();
     const process_t *lastRunningProcess = NULL;
     int clock = 0;
     while (!isEmpty(process_list) || !isEmpty(runningProcesses)) {
-        if(findProcessAndInsert(process_list, runningProcesses, clock)) {
-            printf("NEW PROCESS GOT INSERTED\n");
+        //if(findProcessAndInsert(process_list, runningProcesses, clock)) {
+            //printf("NEW PROCESS GOT INSERTED\n");
+        //}
+        if(findProcessAndInsertAtEnd(process_list, runningProcesses, clock, quantum)) {
+            //printf("NEW PROCESS GOT INSERTED\n");
         }
         const int timeSlice = quantum; // Always use full quantum time
 
@@ -187,12 +231,19 @@ void rrFirstFitMem(processLL_t *process_list, const int quantum) {
 
             const processNode_t *currentNode = runningProcesses->head;
             //const int timeSlice = quantum; // Always use full quantum time
-            currentNode->process->status = RUNNING; // allow process to run
+            if(firstFitAllocate(currentNode->process, memory)) {
+                currentNode->process->status = RUNNING; // allow process to run
+            }
+            else {
+                moveNodeToEnd(currentNode->process, runningProcesses);
+            }
             // print on context switch
             if(currentNode->process->status == RUNNING) {
                 if (lastRunningProcess != currentNode->process) {
-                    printf("%d,RUNNING,process-name=%s,remaining-time=%d\n",
-                           clock, currentNode->process->name, currentNode->process->remainingTime);
+                    printf("%d,RUNNING,process-name=%s,remaining-time=%d,mem-usage=%d%,allocated-at=%d\n",
+                           clock, currentNode->process->name, currentNode->process->remainingTime,
+                           calculateUsedMemory(memory),
+                           currentNode->process->memory.start);
                     lastRunningProcess = currentNode->process;
                 }
                 currentNode->process->remainingTime -= timeSlice;
@@ -202,6 +253,7 @@ void rrFirstFitMem(processLL_t *process_list, const int quantum) {
                 currentNode->process->completedTime = clock + timeSlice;
                 printf("%d,FINISHED,process-name=%s,proc-remaining=",
                        currentNode->process->completedTime, currentNode->process->name);
+                firstFitDeallocate(currentNode->process, memory);
                 addNodeToEnd(currentNode->process, finishedProcesses);
                 removeNode(currentNode->process, runningProcesses);
                 lastRunningProcess = NULL;
