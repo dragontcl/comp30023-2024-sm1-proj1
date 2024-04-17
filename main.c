@@ -65,6 +65,10 @@ int main(int argc, char **argv) {
         process->remainingTime =  process->runTime;
         token = strtok(NULL, " ");
         process->memorySize = (int)strtol(token, NULL, BASE_10);
+        process->memory.status = UNALLOCATED;
+        process->memory.start = -1;
+        process->memory.end = -1;
+
         addNodeToEnd(process, process_list);
     }
     free(line);
@@ -72,7 +76,7 @@ int main(int argc, char **argv) {
         rrInfiniteMem(process_list,quantum);
     }
     if(strcmp(memoryType, "first-fit") == 0) {
-
+        rrFirstFitMem(process_list,quantum);
     }
     if(strcmp(memoryType, "paged") == 0) {
 

@@ -6,11 +6,22 @@
 #define PROCESS_H
 #define MAX_NAME_LENGTH 9
 
-typedef enum status{
+typedef enum processState{
   READY,
   RUNNING,
   FINISHED
-} status_t;
+} processState_t;
+
+typedef enum memoryStatus{
+  ALLOCATED,
+  UNALLOCATED
+} memoryStatus_t;
+
+typedef struct memory {
+  int start;
+  int end;
+  memoryStatus_t status;
+} memory_t;
 
 typedef struct process{
   int arrivalTime;
@@ -19,7 +30,8 @@ typedef struct process{
   int remainingTime;
   int completedTime;
   int memorySize; //in KB
-  status_t status;
+  memory_t memory;
+  processState_t status;
 } process_t;
 
 typedef struct processNode {

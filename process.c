@@ -97,7 +97,6 @@ void destroyLL(processLL_t *list) {
         }
         free(list);
 }
-
 int isEmpty(const processLL_t *list) {
     return list->head == NULL;
 }
