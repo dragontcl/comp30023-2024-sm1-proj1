@@ -66,9 +66,13 @@ int main(int argc, char **argv) {
         token = strtok(NULL, " ");
         process->memorySize = (int)strtol(token, NULL, BASE_10);
         process->memory.status = UNALLOCATED;
+        //process->paged_memory.pages = {0};
         process->memory.start = -1;
         process->memory.end = -1;
-
+        process->paged_memory.status = UNALLOCATED;
+        for(int i = 0; i < MAXIMUM_MEMORY/PAGE_SIZE; i++){
+            process->paged_memory.pages[i] = 0;
+        }
         addNodeToEnd(process, process_list);
     }
     free(line);
@@ -79,7 +83,7 @@ int main(int argc, char **argv) {
         rrFirstFitMem(process_list,quantum);
     }
     if(strcmp(memoryType, "paged") == 0) {
-
+        rrPagedMem(process_list, quantum);
     }
     if(strcmp(memoryType, "virtual") == 0) {
 

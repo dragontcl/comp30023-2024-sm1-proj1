@@ -5,7 +5,8 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 #define MAX_NAME_LENGTH 9
-
+#define MAXIMUM_MEMORY 2048
+#define PAGE_SIZE 4
 typedef enum processState{
   READY,
   RUNNING,
@@ -14,7 +15,8 @@ typedef enum processState{
 
 typedef enum memoryStatus{
   ALLOCATED,
-  UNALLOCATED
+  UNALLOCATED,
+  PARTIAL
 } memoryStatus_t;
 
 typedef struct memory {
@@ -23,6 +25,12 @@ typedef struct memory {
   memoryStatus_t status;
 } memory_t;
 
+typedef struct pagedMemory {
+  int pages[MAXIMUM_MEMORY/PAGE_SIZE];
+  //int pages[ MAX_MEMORY_PAGES ] = { 0 };
+  memoryStatus_t status;
+}pagedMemory_t;
+
 typedef struct process{
   int arrivalTime;
   char name [MAX_NAME_LENGTH];
@@ -30,7 +38,8 @@ typedef struct process{
   int remainingTime;
   int completedTime;
   int memorySize; //in KB
-  memory_t memory;
+  memory_t memory; // block memory
+  pagedMemory_t paged_memory; // paged memory
   processState_t status;
 } process_t;
 
