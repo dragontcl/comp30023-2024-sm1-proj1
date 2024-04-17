@@ -45,9 +45,6 @@ int main(int argc, char **argv) {
         }
     }
     FILE* fp = fopen(fileName, "r");
-    printf("Quantum is %d\n", quantum);
-    printf("File name is %s\n", fileName);
-    printf("Memory type is %s\n", memoryType);
     if(fp == NULL){
         printf("Failed to obtain file pointer\n");
         return EXIT_FAILURE;
