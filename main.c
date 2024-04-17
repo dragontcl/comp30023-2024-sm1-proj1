@@ -10,10 +10,10 @@
 
 
 
-int main(int argc, char **argv) {
+int main(const int argc, char **argv) {
     int argOption;
-    char *fileName = 0;
-    char *memoryType = 0;
+    const char *fileName = 0;
+    const char *memoryType = 0;
     int quantum = -1;
     // parse input
     while((argOption = getopt(argc, argv, "f:q:m:")) != -1) {

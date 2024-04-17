@@ -32,7 +32,6 @@ void firstFitDeallocate(process_t *process, int memory[]);
 void printMemPage(const process_t * process);
 void pagedMemDeallocate(process_t *process, int memory[], const int clock);
 int pagedMemAllocate(process_t *process, int memory[]);
-int virtualMemAllocate(processNode_t *process_node, int memory[], int clock);
-void virtualMemDeallocate(process_t *process, int deallocateAmt, int memory[],
-                          const int clock, pageFreeType_t type);
+int virtualMemAllocate(const processNode_t *process_node, int memory[], int clock);
+void virtualMemDeallocate(process_t *process, int deallocateAmt, int memory[],const int clock, pageFreeType_t type);
 #endif //MEMSCHEDULER_H
