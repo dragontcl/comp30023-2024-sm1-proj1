@@ -109,6 +109,7 @@ void rrInfiniteMem(processLL_t *process_list, const int quantum) {
         if (!isEmpty(runningProcesses)) {
             // get the first process in the list
             const processNode_t *currentNode = runningProcesses->head;
+            // ** BUG FIX FOR QUEUE ISSUE **
             while (currentNode != NULL && currentNode->process->arrivalTime > clock) {
                 currentNode = currentNode->next;  // Skip processes not yet arrived
             }
@@ -116,14 +117,15 @@ void rrInfiniteMem(processLL_t *process_list, const int quantum) {
                 clock += timeSlice;
                 continue;
             }
+            // ** BUG FIX FOR QUEUE ISSUE **
             currentNode->process->status = RUNNING; // allow process to run
             // print on context switch
             if(currentNode->process->status == RUNNING) {
-                //if (lastRunningProcess != currentNode->process) {
+                if (lastRunningProcess != currentNode->process) {
                     printf("%d,RUNNING,process-name=%s,remaining-time=%d\n",
                            clock, currentNode->process->name, currentNode->process->remainingTime);
-                    //lastRunningProcess = currentNode->process;
-                //}
+                    lastRunningProcess = currentNode->process;
+                }
                 currentNode->process->remainingTime -= timeSlice;
             }
             // check if process is finished && is running
@@ -213,7 +215,6 @@ void rrFirstFitMem(processLL_t *process_list, const int quantum) {
     }
     processLL_t *runningProcesses = createLL();
     processLL_t *finishedProcesses = createLL();
-    processLL_t *testProcess = createLL();
     const process_t *lastRunningProcess = NULL;
     int clock = 0;
     while (!isEmpty(process_list) || !isEmpty(runningProcesses)) {
@@ -224,18 +225,29 @@ void rrFirstFitMem(processLL_t *process_list, const int quantum) {
             //printf("NEW PROCESS GOT INSERTED\n");
         }
         const int timeSlice = quantum; // Always use full quantum time
-
         // there are processes that can be ran in the round robin scheduler
         if (!isEmpty(runningProcesses)) {
             // get the first process in the list
-
             const processNode_t *currentNode = runningProcesses->head;
-            //const int timeSlice = quantum; // Always use full quantum time
+            // ** BUG FIX FOR QUEUE ISSUE **
+            while (currentNode != NULL && currentNode->process->arrivalTime > clock) {
+                currentNode = currentNode->next;  // Skip processes not yet arrived
+            }
+            if (currentNode == NULL) {
+                clock += timeSlice;
+
+                continue;
+            }
+            // ** BUG FIX FOR QUEUE ISSUE **
             if(firstFitAllocate(currentNode->process, memory)) {
+
                 currentNode->process->status = RUNNING; // allow process to run
             }
             else {
                 moveNodeToEnd(currentNode->process, runningProcesses);
+                lastRunningProcess = currentNode->process;
+                currentNode = currentNode->next;
+                continue; // Allocation failed, try next process
             }
             // print on context switch
             if(currentNode->process->status == RUNNING) {
@@ -267,10 +279,11 @@ void rrFirstFitMem(processLL_t *process_list, const int quantum) {
             } else {
                 moveNodeToEnd(currentNode->process, runningProcesses);
             }
-            clock += timeSlice;
         } else {
-            clock+=timeSlice;;
+            //clock+=timeSlice;;
         }
+        clock += timeSlice;
+
     }
     printf("Turnaround time %d\n", avgTurnAroundTime(finishedProcesses));
     printf("Time overhead %.2f %.2f\n", maxOverheadTime(finishedProcesses) ,avgOverheadTime(finishedProcesses));
