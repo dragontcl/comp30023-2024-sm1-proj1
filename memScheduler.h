@@ -12,6 +12,11 @@ typedef enum memoryType{
   PAGED,
   VIRTUAL
 } memoryType_t;
+typedef enum pageFreeType{
+  FULL,
+  PARTIAL
+} pageFreeType_t;
+
 int findProcessAndInsertAtEnd(processLL_t *process_list, processLL_t *running_list, const int clock, const int quantum);
 int turnAroundTime(const process_t *finishedProcesses);
 double avgOverheadTime(const processLL_t *finishedProcesses);
@@ -27,4 +32,7 @@ void firstFitDeallocate(process_t *process, int memory[]);
 void printMemPage(const process_t * process);
 void pagedMemDeallocate(process_t *process, int memory[], const int clock);
 int pagedMemAllocate(process_t *process, int memory[]);
+int virtualMemAllocate(processNode_t *process_node, int memory[], int clock);
+void virtualMemDeallocate(process_t *process, int deallocateAmt, int memory[],
+                          const int clock, pageFreeType_t type);
 #endif //MEMSCHEDULER_H

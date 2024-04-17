@@ -16,7 +16,7 @@ typedef enum processState{
 typedef enum memoryStatus{
   ALLOCATED,
   UNALLOCATED,
-  PARTIAL
+  SEMI_ALLOCATED
 } memoryStatus_t;
 
 typedef struct memory {
@@ -28,6 +28,7 @@ typedef struct memory {
 typedef struct pagedMemory {
   int pages[MAXIMUM_MEMORY/PAGE_SIZE];
   //int pages[ MAX_MEMORY_PAGES ] = { 0 };
+  int pageCount;
   memoryStatus_t status;
 }pagedMemory_t;
 

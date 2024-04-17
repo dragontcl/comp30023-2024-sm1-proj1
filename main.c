@@ -70,6 +70,7 @@ int main(int argc, char **argv) {
         process->memory.start = -1;
         process->memory.end = -1;
         process->paged_memory.status = UNALLOCATED;
+        process->paged_memory.pageCount = 0;
         for(int i = 0; i < MAXIMUM_MEMORY/PAGE_SIZE; i++){
             process->paged_memory.pages[i] = 0;
         }
@@ -86,7 +87,7 @@ int main(int argc, char **argv) {
         rrPagedMem(process_list, quantum);
     }
     if(strcmp(memoryType, "virtual") == 0) {
-
+        rrVirtualMem(process_list, quantum);
     }
     destroyLL(process_list);
     return EXIT_SUCCESS;
