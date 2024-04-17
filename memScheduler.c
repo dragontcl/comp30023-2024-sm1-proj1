@@ -2,9 +2,9 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#define MAXIMUM_MEMORY 4096
 
-
-int findProcessAndInsert(processLL_t *processQueue, processLL_t *runningProcesses, int clock) {
+int findProcessAndInsert(processLL_t *processQueue, processLL_t *runningProcesses, const int clock) {
     int found = 0;
     processNode_t *currentNode = processQueue->head;
     processNode_t *prevNode = NULL;
@@ -39,7 +39,6 @@ int findProcessAndInsert(processLL_t *processQueue, processLL_t *runningProcesse
     }
     return found;
 }
-
 int TurnAroundTime(const process_t *finishedProcesses) {
     return finishedProcesses->completedTime - finishedProcesses->arrivalTime;
 }
@@ -77,7 +76,6 @@ int avgTurnAroundTime(const processLL_t *finishedProcesses) {
     }
     return (int)ceil((double)totalTurnAroundTime / totalProcesses);
 }
-
 void rrInfiniteMem(processLL_t *processQueue, const int quantum) {
     processLL_t *runningProcesses = createLL();
     processLL_t *finishedProcesses = createLL();

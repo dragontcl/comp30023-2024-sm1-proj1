@@ -34,7 +34,7 @@ void addNodeToEnd(process_t *process, processLL_t *list) {
         list->tail = node;
     }
 }
-void moveNodeToEnd(process_t *process, processLL_t *list) {
+void moveNodeToEnd(const process_t *process, processLL_t *list) {
         processNode_t *currentNode = list->head;
         processNode_t *previousNode = NULL;
         while(currentNode != NULL) {
@@ -57,7 +57,7 @@ void moveNodeToEnd(process_t *process, processLL_t *list) {
                 currentNode = currentNode->next;
         }
 }
-void removeNode(process_t *process, processLL_t *list) {
+void removeNode(const process_t *process, processLL_t *list) {
     processNode_t *currentNode = list->head;
     processNode_t *previousNode = NULL;
     while(currentNode != NULL) {
@@ -78,8 +78,8 @@ void removeNode(process_t *process, processLL_t *list) {
         currentNode = currentNode->next;
     }
 }
-void printLL(processLL_t *list) {
-    processNode_t *currentNode = list->head;
+void printLL(const processLL_t *list) {
+    const processNode_t *currentNode = list->head;
     while(currentNode != NULL) {
         printf("Process Name: %s | Arrival Time: %d | Run Time: %d | Completed Time: %d | Memory Size: %d KB\n",
                currentNode->process->name, currentNode->process->arrivalTime, currentNode->process->runTime,
@@ -98,6 +98,6 @@ void destroyLL(processLL_t *list) {
         free(list);
 }
 
-int isEmpty(processLL_t *list) {
+int isEmpty(const processLL_t *list) {
     return list->head == NULL;
 }

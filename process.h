@@ -35,10 +35,10 @@ typedef struct processList {
 processLL_t* createLL();
 void addNodeToStart(process_t *process, processLL_t *list);
 void addNodeToEnd(process_t *process, processLL_t *list);
-void moveNodeToEnd(process_t *process, processLL_t *list);
-void removeNode(process_t *process, processLL_t *list);
-void printLL(processLL_t *list);
+void moveNodeToEnd(const process_t *process, processLL_t *list);
+void removeNode(const process_t *process, processLL_t *list);
+void printLL(const processLL_t *list);
 void destroyLL(processLL_t *list);
-int isEmpty(processLL_t *list);
+int isEmpty(const processLL_t *list);
 
 #endif //PROCESS_H
