@@ -12,15 +12,15 @@
 
 
 ////////////////////CALCULATIONS////////////////////
-int findProcessAndInsertAtEnd(processLL_t *process_list, processLL_t *running_list, const int clock, const int quantum) {
+int findProcessAndInsertAtEnd(processLL_t *processList, processLL_t *runningList, const int clock, const int quantum) {
     int found = 0;
-    const processNode_t *currentNode = process_list->head;
+    const processNode_t *currentNode = processList->head;
     while(currentNode != NULL) {
         const processNode_t *nextNode = currentNode->next;
         if(currentNode->process->arrivalTime <= clock+quantum) {
             found = 1;
-            addNodeToEnd(currentNode->process, running_list);
-            removeNode(currentNode->process, process_list);
+            addNodeToEnd(currentNode->process, runningList);
+            removeNode(currentNode->process, processList);
         }
         currentNode = nextNode;
     }
@@ -128,7 +128,7 @@ void firstFitDeallocate(process_t *process, int memory[]) {
     process->memory.status = UNALLOCATED;
 }
 int pagedMemAllocate(process_t *process, int memory[]) {
-    if (process->paged_memory.status == ALLOCATED) { // already allocated memory no need to allocate again
+    if (process->pagedMemory.status == ALLOCATED) { // already allocated memory no need to allocate again
         return 1;
     }
     const int pagesRequired = (process->memorySize/PAGE_SIZE)+(process->memorySize%PAGE_SIZE);
@@ -146,10 +146,10 @@ int pagedMemAllocate(process_t *process, int memory[]) {
     for (int i = 0; i < MAXIMUM_MEMORY/PAGE_SIZE; i++) {
         if (memory[i] == 0) {
             memory[i] = 1; // allocate this page to the process
-            process->paged_memory.pages[i] = 1; // mark this page as allocated in the process's paged memory
+            process->pagedMemory.pages[i] = 1; // mark this page as allocated in the process's paged memory
             pagesAllocated++;
             if (pagesAllocated == pagesRequired) {
-                process->paged_memory.status = ALLOCATED;
+                process->pagedMemory.status = ALLOCATED;
                 return 1; // successfully allocated memory
             }
         }
@@ -157,26 +157,26 @@ int pagedMemAllocate(process_t *process, int memory[]) {
     return 0; // failed to allocate memory
 }
 void pagedMemDeallocate(process_t *process, int memory[], const int clock) {
-    if (process->paged_memory.status == UNALLOCATED) {
+    if (process->pagedMemory.status == UNALLOCATED) {
         return; // already deallocated memory no need to deallocate again
     }
     printf("%d,EVICTED,evicted-frames=[",clock);
     printMemPage(process);
     printf("]\n");
     for (int i = 0; i < MAXIMUM_MEMORY/PAGE_SIZE; i++) {
-        if (process->paged_memory.pages[i] == 1) {
+        if (process->pagedMemory.pages[i] == 1) {
             memory[i] = 0; // deallocate this page from the process
-            process->paged_memory.pages[i] = 0; // mark this page as deallocated in the process's paged memory
+            process->pagedMemory.pages[i] = 0; // mark this page as deallocated in the process's paged memory
         }
     }
-    process->paged_memory.status = UNALLOCATED;
+    process->pagedMemory.status = UNALLOCATED;
 }
-int virtualMemAllocate(const processNode_t *process_node, int memory[], int clock) {
-    process_t *process = process_node->process;
+int virtualMemAllocate(const processNode_t *processNode, int memory[], int clock) {
+    process_t *process = processNode->process;
     const int pagesRequired = (process->memorySize / PAGE_SIZE) + (process->memorySize % PAGE_SIZE != 0);
 
-    if (process->paged_memory.status == ALLOCATED &&
-        (process->paged_memory.pageCount >= pagesRequired || process->paged_memory.pageCount >= 4)) {
+    if (process->pagedMemory.status == ALLOCATED &&
+        (process->pagedMemory.pageCount >= pagesRequired || process->pagedMemory.pageCount >= 4)) {
         return 1;
     }
     int unallocatedPages = 0;
@@ -194,13 +194,13 @@ int virtualMemAllocate(const processNode_t *process_node, int memory[], int cloc
     }
     if (unallocatedPages < minPagesToAllocate) {
         // no memory available to allocate partially deallocate
-        while(process_node != NULL) {
-            if(process_node->process->paged_memory.status == ALLOCATED && process_node->process->paged_memory.pageCount >= minPagesToAllocate) {
-                virtualMemDeallocate(process_node->process, minPagesToAllocate-unallocatedPages, memory,
+        while(processNode != NULL) {
+            if(processNode->process->pagedMemory.status == ALLOCATED && processNode->process->pagedMemory.pageCount >= minPagesToAllocate) {
+                virtualMemDeallocate(processNode->process, minPagesToAllocate-unallocatedPages, memory,
                                      clock, PARTIAL);
                 break;
             }
-            process_node = process_node->next;
+            processNode = processNode->next;
         }
         //return 0;
     }
@@ -208,20 +208,20 @@ int virtualMemAllocate(const processNode_t *process_node, int memory[], int cloc
     for (int i = 0; i < MAXIMUM_MEMORY / PAGE_SIZE; i++) {
         if (memory[i] == 0) {
             memory[i] = 1;
-            process->paged_memory.pages[i] = 1;
+            process->pagedMemory.pages[i] = 1;
             pagesAllocated++;
             if (pagesAllocated == pagesRequired) {
-                process->paged_memory.status = ALLOCATED;
-                process->paged_memory.pageCount = pagesAllocated;
+                process->pagedMemory.status = ALLOCATED;
+                process->pagedMemory.pageCount = pagesAllocated;
                 return 1;
             }
             if (pagesAllocated >= minPagesToAllocate && pagesAllocated < pagesRequired) {
-                process->paged_memory.status = ALLOCATED;
+                process->pagedMemory.status = ALLOCATED;
             }
         }
     }
     if (pagesAllocated >= minPagesToAllocate) {
-        process->paged_memory.pageCount = pagesAllocated;
+        process->pagedMemory.pageCount = pagesAllocated;
         return 1;
     } else {
         return 0;
@@ -230,7 +230,7 @@ int virtualMemAllocate(const processNode_t *process_node, int memory[], int cloc
 void virtualMemDeallocate(process_t *process, int deallocateAmt, int memory[],const int clock, pageFreeType_t type) {
     char* tempStr = malloc(sizeof(char)*MAX_STRING_LENGTH);
     strcpy(tempStr, "\0");//set null string first
-    if (process->paged_memory.status == UNALLOCATED) {
+    if (process->pagedMemory.status == UNALLOCATED) {
         return;
     }
     int offset = 0;
@@ -238,11 +238,11 @@ void virtualMemDeallocate(process_t *process, int deallocateAmt, int memory[],co
         if(deallocateAmt == 0 && type == FULL) {
             //printMemPage(process);
             for (int i = 0; i < MAXIMUM_MEMORY/PAGE_SIZE; i++) {
-                if (process->paged_memory.pages[i] == 1) {
+                if (process->pagedMemory.pages[i] == 1) {
                     offset += snprintf(tempStr + offset, MAX_STRING_LENGTH - offset, "%d,", i);
                     memory[i] = 0; // deallocate this page from the process
-                    process->paged_memory.pages[i] = 0; // mark this page as deallocated in the process's paged memory
-                    process->paged_memory.pageCount--;
+                    process->pagedMemory.pages[i] = 0; // mark this page as deallocated in the process's paged memory
+                    process->pagedMemory.pageCount--;
                 }
             }
         }
@@ -250,10 +250,10 @@ void virtualMemDeallocate(process_t *process, int deallocateAmt, int memory[],co
             // Partial deallocation to make room for the target process
             int pagesFreed = 0;
             for (int i = 0; i < MAXIMUM_MEMORY / PAGE_SIZE && pagesFreed < deallocateAmt; i++) {
-                if (process->paged_memory.pages[i] == 1 && pagesFreed < 4) { // Restrict to first 4 pages
+                if (process->pagedMemory.pages[i] == 1 && pagesFreed < 4) { // Restrict to first 4 pages
                     memory[i] = 0; // Deallocate this page from the process
-                    process->paged_memory.pages[i] = 0; // Mark this page as deallocated in the process's paged memory
-                    process->paged_memory.pageCount--;
+                    process->pagedMemory.pages[i] = 0; // Mark this page as deallocated in the process's paged memory
+                    process->pagedMemory.pageCount--;
                     offset += snprintf(tempStr + offset, MAX_STRING_LENGTH - offset, "%d,", i);
                     pagesFreed++;
                 }
@@ -269,17 +269,14 @@ void virtualMemDeallocate(process_t *process, int deallocateAmt, int memory[],co
 ////////////////////MEMORY MANAGEMENT////////////////////
 
 ////////////////ROUND ROBIN SCHEDULERS////////////////
-void rrInfiniteMem(processLL_t *process_list, const int quantum) {
+void rrBlockBasedMem(processLL_t *processList, const int quantum, const memoryType_t memoryType) {
+    int memory[MAXIMUM_MEMORY] = {0};
     processLL_t *runningProcesses = createLL();
     processLL_t *finishedProcesses = createLL();
     const process_t *lastRunningProcess = NULL;
     int clock = 0;
-    while (!isEmpty(process_list) || !isEmpty(runningProcesses)) {
-        //if(findProcessAndInsert(process_list, runningProcesses, clock)) {
-            //printf("NEW PROCESS GOT INSERTED\n");
-        //}
-        if(findProcessAndInsertAtEnd(process_list, runningProcesses, clock, quantum)) {
-            //printf("NEW PROCESS GOT INSERTED\n");
+    while (!isEmpty(processList) || !isEmpty(runningProcesses)) {
+        if(findProcessAndInsertAtEnd(processList, runningProcesses, clock, quantum)) {
         }
         const int timeSlice = quantum; // Always use full quantum time
         // there are processes that can be ran in the round robin scheduler
@@ -296,11 +293,29 @@ void rrInfiniteMem(processLL_t *process_list, const int quantum) {
             }
             // ** BUG FIX FOR QUEUE ISSUE **
             currentNode->process->status = RUNNING; // allow process to run
+            if(memoryType == FIRST_FIT) {
+                if(firstFitAllocate(currentNode->process, memory)) {
+                    currentNode->process->status = RUNNING; // allow process to run
+                }
+                else {
+                    moveNodeToEnd(currentNode->process, runningProcesses);
+                    lastRunningProcess = currentNode->process;
+                    continue; // allocation failed, try next process
+                }
+            }
             // print on context switch
             if(currentNode->process->status == RUNNING) {
                 if (lastRunningProcess != currentNode->process) {
-                    printf("%d,RUNNING,process-name=%s,remaining-time=%d\n",
-                           clock, currentNode->process->name, currentNode->process->remainingTime);
+                    if(memoryType == FIRST_FIT) {
+                        printf("%d,RUNNING,process-name=%s,remaining-time=%d,mem-usage=%d%%,allocated-at=%d\n",
+                            clock, currentNode->process->name, currentNode->process->remainingTime,
+                            calculateUsedMemory(memory, FIRST_FIT),
+                            currentNode->process->memory.start);
+                    }
+                    else {
+                        printf("%d,RUNNING,process-name=%s,remaining-time=%d\n",
+                            clock, currentNode->process->name, currentNode->process->remainingTime);
+                    }
                     lastRunningProcess = currentNode->process;
                 }
                 currentNode->process->remainingTime -= timeSlice;
@@ -310,83 +325,9 @@ void rrInfiniteMem(processLL_t *process_list, const int quantum) {
                 currentNode->process->completedTime = clock + timeSlice;
                 printf("%d,FINISHED,process-name=%s,proc-remaining=",
                        currentNode->process->completedTime, currentNode->process->name);
-                addNodeToEnd(currentNode->process, finishedProcesses);
-                removeNode(currentNode->process, runningProcesses);
-                lastRunningProcess = NULL;
-                int i = 0;
-                const processNode_t *temp = runningProcesses->head;
-                while (temp != NULL) {
-                    i++;
-                    temp = temp->next;
+                if(memoryType == FIRST_FIT) {
+                    firstFitDeallocate(currentNode->process, memory);
                 }
-                printf("%d\n", i);
-            } else {
-                moveNodeToEnd(currentNode->process, runningProcesses);
-            }
-            clock += timeSlice;
-        } else {
-            clock+=timeSlice;;
-        }
-    }
-    printf("Turnaround time %d\n", avgTurnAroundTime(finishedProcesses));
-    printf("Time overhead %.2f %.2f\n", maxOverheadTime(finishedProcesses) ,avgOverheadTime(finishedProcesses));
-    printf("Makespan %d\n", clock);
-    destroyLL(runningProcesses);
-    destroyLL(finishedProcesses);
-}
-
-void rrFirstFitMem(processLL_t *process_list, const int quantum) {
-    int memory[MAXIMUM_MEMORY] = {0};
-    processLL_t *runningProcesses = createLL();
-    processLL_t *finishedProcesses = createLL();
-    const process_t *lastRunningProcess = NULL;
-    int clock = 0;
-    while (!isEmpty(process_list) || !isEmpty(runningProcesses)) {
-
-        if(findProcessAndInsertAtEnd(process_list, runningProcesses, clock, quantum)) {
-            //printf("NEW PROCESS GOT INSERTED AT BACK\n");
-        }
-        const int timeSlice = quantum; // Always use full quantum time
-        // there are processes that can be ran in the round robin scheduler
-        if (!isEmpty(runningProcesses)) {
-            // get the first process in the list
-            const processNode_t *currentNode = runningProcesses->head;
-            // ** BUG FIX FOR QUEUE ISSUE **
-            while (currentNode != NULL && currentNode->process->arrivalTime > clock) {
-                currentNode = currentNode->next;  // Skip processes not yet arrived
-            }
-            if (currentNode == NULL) {
-                clock += timeSlice;
-                continue;
-            }
-            // ** BUG FIX FOR QUEUE ISSUE **
-            if(firstFitAllocate(currentNode->process, memory)) {
-
-                currentNode->process->status = RUNNING; // allow process to run
-            }
-            else {
-                moveNodeToEnd(currentNode->process, runningProcesses);
-                lastRunningProcess = currentNode->process;
-                //currentNode = currentNode->next;
-                continue; // allocation failed, try next process
-            }
-            // print on context switch
-            if(currentNode->process->status == RUNNING) {
-                if (lastRunningProcess != currentNode->process) {
-                    printf("%d,RUNNING,process-name=%s,remaining-time=%d,mem-usage=%d%%,allocated-at=%d\n",
-                           clock, currentNode->process->name, currentNode->process->remainingTime,
-                           calculateUsedMemory(memory, FIRST_FIT),
-                           currentNode->process->memory.start);
-                    lastRunningProcess = currentNode->process;
-                }
-                currentNode->process->remainingTime -= timeSlice;
-            }
-            // check if process is finished && is running
-            if (currentNode->process->remainingTime <= 0 && currentNode->process->status == RUNNING) {
-                currentNode->process->completedTime = clock + timeSlice;
-                printf("%d,FINISHED,process-name=%s,proc-remaining=",
-                       currentNode->process->completedTime, currentNode->process->name);
-                firstFitDeallocate(currentNode->process, memory);
                 addNodeToEnd(currentNode->process, finishedProcesses);
                 removeNode(currentNode->process, runningProcesses);
                 lastRunningProcess = NULL;
@@ -409,15 +350,16 @@ void rrFirstFitMem(processLL_t *process_list, const int quantum) {
     destroyLL(runningProcesses);
     destroyLL(finishedProcesses);
 }
-void rrPagedMem(processLL_t *process_list, const int quantum) {
+
+void rrPagedMem(processLL_t *processList, const int quantum) {
     int memory[MAXIMUM_MEMORY] = {0};
     processLL_t *runningProcesses = createLL();
     processLL_t *finishedProcesses = createLL();
     process_t *lastRunningProcess = NULL;
     int clock = 0;
-    while (!isEmpty(process_list) || !isEmpty(runningProcesses)) {
+    while (!isEmpty(processList) || !isEmpty(runningProcesses)) {
 
-        if(findProcessAndInsertAtEnd(process_list, runningProcesses, clock, quantum)) {
+        if(findProcessAndInsertAtEnd(processList, runningProcesses, clock, quantum)) {
             //printf("NEW PROCESS GOT INSERTED AT BACK\n");
         }
         const int timeSlice = quantum; // Always use full quantum time
@@ -487,15 +429,15 @@ void rrPagedMem(processLL_t *process_list, const int quantum) {
     destroyLL(runningProcesses);
     destroyLL(finishedProcesses);
 }
-void rrVirtualMem(processLL_t *process_list, const int quantum) {
+void rrVirtualMem(processLL_t *processList, const int quantum) {
     int memory[MAXIMUM_MEMORY] = {0};
     processLL_t *runningProcesses = createLL();
     processLL_t *finishedProcesses = createLL();
     process_t *lastRunningProcess = NULL;
     int clock = 0;
-    while (!isEmpty(process_list) || !isEmpty(runningProcesses)) {
+    while (!isEmpty(processList) || !isEmpty(runningProcesses)) {
 
-        if(findProcessAndInsertAtEnd(process_list, runningProcesses, clock, quantum)) {
+        if(findProcessAndInsertAtEnd(processList, runningProcesses, clock, quantum)) {
             //printf("NEW PROCESS GOT INSERTED AT BACK\n");
         }
         const int timeSlice = quantum; // Always use full quantum time
@@ -565,12 +507,12 @@ void printMemPage(const process_t * process) {
     int i = 0;
     int finalPage = 0;
     for (i = 0; i < MAXIMUM_MEMORY/PAGE_SIZE; i++) {
-        if (process->paged_memory.pages[i] == 1) {
+        if (process->pagedMemory.pages[i] == 1) {
             finalPage = i;
         }
     }
     for (i = 0; i < MAXIMUM_MEMORY/PAGE_SIZE; i++) {
-        if (process->paged_memory.pages[i] == 1) {
+        if (process->pagedMemory.pages[i] == 1) {
             if(i != finalPage)
                 printf("%d,", i);
             else

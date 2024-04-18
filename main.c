@@ -4,16 +4,15 @@
 #include <unistd.h>
 #include "process.h"
 #include "memScheduler.h"
-#define BASE_10 10
-#define EXIT_FAILURE 1
-#define EXIT_SUCCESS 0
+#include "main.h"
+
 
 
 
 int main(const int argc, char **argv) {
     int argOption;
     const char *fileName = 0;
-    const char *memoryType = 0;
+    memoryType_t memoryType = INVALID;
     int quantum = -1;
     // parse input
     while((argOption = getopt(argc, argv, "f:q:m:")) != -1) {
@@ -31,11 +30,8 @@ int main(const int argc, char **argv) {
                 }
                 break;
             case 'm': //memory_type
-                memoryType = optarg;
-                if(strcmp(optarg, "infinite") != 0 &&
-                    strcmp(optarg, "first-fit") != 0 &&
-                    strcmp(optarg, "paged") != 0 &&
-                    strcmp(optarg, "virtual") != 0){
+                memoryType = parseMemoryType(optarg);
+                if (memoryType == INVALID) {
                     printf("Invalid memory type\n");
                     return EXIT_FAILURE;
                 }
@@ -69,26 +65,46 @@ int main(const int argc, char **argv) {
         //process->paged_memory.pages = {0};
         process->memory.start = -1;
         process->memory.end = -1;
-        process->paged_memory.status = UNALLOCATED;
-        process->paged_memory.pageCount = 0;
+        process->pagedMemory.status = UNALLOCATED;
+        process->pagedMemory.pageCount = 0;
         for(int i = 0; i < MAXIMUM_MEMORY/PAGE_SIZE; i++){
-            process->paged_memory.pages[i] = 0;
+            process->pagedMemory.pages[i] = 0;
         }
         addNodeToEnd(process, process_list);
     }
     free(line);
-    if(strcmp(memoryType, "infinite") == 0) {
-        rrInfiniteMem(process_list,quantum);
-    }
-    if(strcmp(memoryType, "first-fit") == 0) {
-        rrFirstFitMem(process_list,quantum);
-    }
-    if(strcmp(memoryType, "paged") == 0) {
+    switch (memoryType) {
+    case INFINITE:
+        //rrInfiniteMem(process_list, quantum);
+        //break;
+    case FIRST_FIT:
+        //rrFirstFitMem(process_list, quantum);
+        rrBlockBasedMem(process_list, quantum, memoryType);
+        break;
+    case PAGED:
         rrPagedMem(process_list, quantum);
-    }
-    if(strcmp(memoryType, "virtual") == 0) {
+        break;
+    case VIRTUAL:
         rrVirtualMem(process_list, quantum);
+        break;
+    default:
+        printf("Unsupported memory type\n");
+        break;
     }
+
     destroyLL(process_list);
     return EXIT_SUCCESS;
+}
+memoryType_t parseMemoryType(const char* optarg) {
+    if (strcmp(optarg, "infinite") == 0) {
+        return INFINITE;
+    } else if (strcmp(optarg, "first-fit") == 0) {
+        return FIRST_FIT;
+    } else if (strcmp(optarg, "paged") == 0) {
+        return PAGED;
+    } else if (strcmp(optarg, "virtual") == 0) {
+        return VIRTUAL;
+    } else {
+        return INVALID;
+    }
 }

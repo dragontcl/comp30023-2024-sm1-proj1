@@ -10,7 +10,8 @@ typedef enum memoryType{
   INFINITE,
   FIRST_FIT,
   PAGED,
-  VIRTUAL
+  VIRTUAL,
+  INVALID
 } memoryType_t;
 typedef enum pageFreeType{
   FULL,
@@ -34,4 +35,5 @@ void pagedMemDeallocate(process_t *process, int memory[], const int clock);
 int pagedMemAllocate(process_t *process, int memory[]);
 int virtualMemAllocate(const processNode_t *process_node, int memory[], int clock);
 void virtualMemDeallocate(process_t *process, int deallocateAmt, int memory[],const int clock, pageFreeType_t type);
+void rrBlockBasedMem(processLL_t *processList, const int quantum, const memoryType_t type);
 #endif //MEMSCHEDULER_H

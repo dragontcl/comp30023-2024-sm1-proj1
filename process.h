@@ -40,7 +40,7 @@ typedef struct process{
   int completedTime;
   int memorySize; //in KB
   memory_t memory; // block memory
-  pagedMemory_t paged_memory; // paged memory
+  pagedMemory_t pagedMemory; // paged memory
   processState_t status;
 } process_t;
 
