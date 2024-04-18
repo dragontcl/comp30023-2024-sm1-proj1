@@ -276,7 +276,6 @@ void rrMemoryScheduler(processLL_t *processList, const int quantum, const memory
     while (!isEmpty(processList) || !isEmpty(runningProcesses)) {
         if(findProcessAndInsertAtEnd(processList, runningProcesses, clock, quantum)) {
         }
-        const int timeSlice = quantum; // Always use full quantum time
         // there are processes that can be ran in the round robin scheduler
         if (!isEmpty(runningProcesses)) {
             // get the first process in the list
@@ -286,7 +285,7 @@ void rrMemoryScheduler(processLL_t *processList, const int quantum, const memory
                 currentNode = currentNode->next;  // Skip processes not yet arrived
             }
             if (currentNode == NULL) {
-                clock += timeSlice;
+                clock += quantum;
                 continue;
             }
             // ** BUG FIX FOR QUEUE ISSUE **
@@ -297,7 +296,7 @@ void rrMemoryScheduler(processLL_t *processList, const int quantum, const memory
                 else {
                     moveNodeToEnd(currentNode->process, runningProcesses);
                     lastRunningProcess = currentNode->process;
-                    continue; // allocation failed, try next process
+                    continue;
                 }
             }
             else if (memoryType == PAGED){
@@ -305,11 +304,8 @@ void rrMemoryScheduler(processLL_t *processList, const int quantum, const memory
                     currentNode->process->status = RUNNING; // allow process to run
                 }
                 else {
-                    //moveNodeToEnd(currentNode->process, runningProcesses);
-                    //lastRunningProcess = currentNode->process;
-                    //currentNode = currentNode->next;
                     pagedMemDeallocate(lastRunningProcess, memory, clock);
-                    continue; // allocation failed, try next process
+                    continue;
                 }
             }
             else if (memoryType == VIRTUAL){
@@ -318,7 +314,7 @@ void rrMemoryScheduler(processLL_t *processList, const int quantum, const memory
                 }
                 else {
                     virtualMemDeallocate(currentNode->next->process,4, memory, clock,PARTIAL);
-                    continue; // allocation failed, try next process
+                    continue;
                 }
             }
             else{
@@ -346,10 +342,10 @@ void rrMemoryScheduler(processLL_t *processList, const int quantum, const memory
                     }
                     lastRunningProcess = currentNode->process;
                 }
-                currentNode->process->remainingTime -= timeSlice;
+                currentNode->process->remainingTime -= quantum;
             }
             if (currentNode->process->remainingTime <= 0 && currentNode->process->status == RUNNING) {
-                currentNode->process->completedTime = clock + timeSlice;
+                currentNode->process->completedTime = clock + quantum;
                 if(memoryType == FIRST_FIT) {
                     firstFitDeallocate(currentNode->process, memory);
                 }
@@ -375,7 +371,7 @@ void rrMemoryScheduler(processLL_t *processList, const int quantum, const memory
                 moveNodeToEnd(currentNode->process, runningProcesses);
             }
         }
-        clock += timeSlice;
+        clock += quantum;
     }
     printf("Turnaround time %d\n", avgTurnAroundTime(finishedProcesses));
     printf("Time overhead %.2f %.2f\n", maxOverheadTime(finishedProcesses) ,avgOverheadTime(finishedProcesses));
