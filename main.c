@@ -69,6 +69,7 @@ int main(const int argc, char **argv) {
         addNodeToEnd(process, process_list);
     }
     free(line);
+    fclose(fp);
     switch (memoryType) {
         case INFINITE:
         case FIRST_FIT:
