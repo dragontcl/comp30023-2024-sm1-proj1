@@ -79,13 +79,17 @@ int main(const int argc, char **argv) {
         //break;
     case FIRST_FIT:
         //rrFirstFitMem(process_list, quantum);
-        rrBlockBasedMem(process_list, quantum, memoryType);
-        break;
+        //rrBlockBasedMem(process_list, quantum, memoryType);
+        //break;
     case PAGED:
-        rrPagedMem(process_list, quantum);
-        break;
+        //rrPagedMem(process_list, quantum);
+        //rrMemoryScheduler(process_list, quantum, memoryType);
+
+        //break;
     case VIRTUAL:
-        rrVirtualMem(process_list, quantum);
+        rrMemoryScheduler(process_list, quantum, memoryType);
+
+        //rrVirtualMem(process_list, quantum);
         break;
     default:
         printf("Unsupported memory type\n");
