@@ -21,9 +21,7 @@ int main(const int argc, char **argv) {
                 fileName = optarg;
                 break;
             case 'q': //quantum
-                //use strtol to handle input with string and ints
                 quantum = (int)strtol(optarg, NULL, BASE_10);
-                //quantum limit between 1 and 3
                 if(quantum < 1 || quantum > 3){
                     printf("Invalid quantum value\n");
                     return EXIT_FAILURE;
@@ -50,7 +48,6 @@ int main(const int argc, char **argv) {
     processLL_t* process_list = createLL();
     // read file into process list
     while(getline(&line, &len, fp) != -1){
-        // read line into process
         process_t *process = (process_t *)malloc(sizeof(process_t));
         const char * token = strtok(line, " ");
         process->arrivalTime = (int)strtol(token, NULL, BASE_10);
@@ -62,7 +59,6 @@ int main(const int argc, char **argv) {
         token = strtok(NULL, " ");
         process->memorySize = (int)strtol(token, NULL, BASE_10);
         process->memory.status = UNALLOCATED;
-        //process->paged_memory.pages = {0};
         process->memory.start = -1;
         process->memory.end = -1;
         process->pagedMemory.status = UNALLOCATED;
@@ -74,41 +70,23 @@ int main(const int argc, char **argv) {
     }
     free(line);
     switch (memoryType) {
-    case INFINITE:
-        //rrInfiniteMem(process_list, quantum);
-        //break;
-    case FIRST_FIT:
-        //rrFirstFitMem(process_list, quantum);
-        //rrBlockBasedMem(process_list, quantum, memoryType);
-        //break;
-    case PAGED:
-        //rrPagedMem(process_list, quantum);
-        //rrMemoryScheduler(process_list, quantum, memoryType);
-
-        //break;
-    case VIRTUAL:
-        rrMemoryScheduler(process_list, quantum, memoryType);
-
-        //rrVirtualMem(process_list, quantum);
-        break;
-    default:
-        printf("Unsupported memory type\n");
-        break;
+        case INFINITE:
+        case FIRST_FIT:
+        case PAGED:
+        case VIRTUAL:
+            rrMemoryScheduler(process_list, quantum, memoryType);
+            break;
+        default:
+            printf("Unsupported memory type\n");
+            break;
     }
-
     destroyLL(process_list);
     return EXIT_SUCCESS;
 }
 memoryType_t parseMemoryType(const char* optarg) {
-    if (strcmp(optarg, "infinite") == 0) {
-        return INFINITE;
-    } else if (strcmp(optarg, "first-fit") == 0) {
-        return FIRST_FIT;
-    } else if (strcmp(optarg, "paged") == 0) {
-        return PAGED;
-    } else if (strcmp(optarg, "virtual") == 0) {
-        return VIRTUAL;
-    } else {
-        return INVALID;
-    }
+    if (strcmp(optarg, "infinite") == 0) return INFINITE;
+    if (strcmp(optarg, "first-fit") == 0) return FIRST_FIT;
+    if (strcmp(optarg, "paged") == 0) return PAGED;
+    if (strcmp(optarg, "virtual") == 0) return VIRTUAL;
+    return INVALID;
 }

@@ -32,9 +32,9 @@ double avgOverheadTime(const processLL_t *finishedProcesses){
         int totalProcesses = 0;
         const processNode_t *currentNode = finishedProcesses->head;
         while (currentNode != NULL) {
-                totalOverheadTime += ((double)turnAroundTime(currentNode->process)/ currentNode->process->runTime);
-                totalProcesses++;
-                currentNode = currentNode->next;
+            totalOverheadTime += ((double)turnAroundTime(currentNode->process)/ currentNode->process->runTime);
+            totalProcesses++;
+            currentNode = currentNode->next;
         }
         return round(totalOverheadTime / totalProcesses * 100) / 100;
 }
@@ -47,7 +47,6 @@ double maxOverheadTime(const processLL_t *finishedProcesses){
         }
         currentNode = currentNode->next;
     }
-
     return round(maxOverheadTime * 100) / 100;
 }
 int avgTurnAroundTime(const processLL_t *finishedProcesses) {
@@ -79,44 +78,45 @@ int calculateUsedMemory(int memory[], const memoryType_t type) {
             usedMemory++;
         }
     }
-    double percentage = ((double) usedMemory / maxMemory) * 100.0;
+    const double percentage = ((double) usedMemory / maxMemory) * 100.0;
     return (int)ceil(percentage); //do some casting magic to round
 }
 ////////////////////CALCULATIONS////////////////////
 
 ////////////////////MEMORY MANAGEMENT////////////////////
+
 int firstFitAllocate(process_t *process, int memory[]) {
     const int memoryRequired = process->memorySize;
-    if (process->memory.status == ALLOCATED) { // already allocated memory no need to allocate again
+    if (process->memory.status == ALLOCATED) { // Already allocated, no need to allocate again
         return 1;
     }
-    for (int i = 0; i < MAXIMUM_MEMORY; i++) {
-        if (memory[i] == 0) {
+    int i = 0;
+    while (i < MAXIMUM_MEMORY) {
+        if (memory[i] == 0) { // Found a free spot
             int block = 0;
-            for (int j = i; j < MAXIMUM_MEMORY; j++) {
-                if (memory[j] == 0) {
-                    block++;
-                } else {
-                    break;
-                }
+            while (block < memoryRequired && (i + block) < MAXIMUM_MEMORY && memory[i + block] == 0) {
+                block++;
             }
-            if (block >= memoryRequired) {
+            if (block == memoryRequired) { // Enough space found
                 for (int j = i; j < i + memoryRequired; j++) {
                     memory[j] = 1;
                 }
                 process->memory.start = i;
                 process->memory.end = i + memoryRequired - 1;
                 process->memory.status = ALLOCATED;
-                return 1; // successfully allocated memory
+                return 1; // Successfully allocated memory
             }
+            i += block; // Skip the block that was not enough
+        } else {
+            i++;
         }
     }
-    return 0; // failed to allocate memory
+    return 0; // Failed to allocate memory
 }
-void firstFitDeallocate(process_t *process, int memory[]) {
+
+void blockMemDeallocate(process_t *process, int memory[]) {
     if(process->memory.status == UNALLOCATED) {
-        return;
-        // already deallocated memory no need to deallocate again
+        return; // already deallocated memory no need to deallocate again
     }
     for(int i = process->memory.start; i <= process->memory.end; i++) {
         memory[i] = 0;
@@ -148,6 +148,7 @@ int pagedMemAllocate(process_t *process, int memory[]) {
             pagesAllocated++;
             if (pagesAllocated == pagesRequired) {
                 process->pagedMemory.status = ALLOCATED;
+                process->pagedMemory.pageCount = pagesAllocated;
                 return 1; // successfully allocated memory
             }
         }
@@ -184,7 +185,7 @@ int virtualMemAllocate(const processNode_t *processNode, int memory[], int clock
             unallocatedPages++;
         }
     }
-    int minPagesToAllocate = 0;
+    int minPagesToAllocate;
     if(pagesRequired >= 4) {
         minPagesToAllocate = 4;
     } else {
@@ -225,7 +226,7 @@ int virtualMemAllocate(const processNode_t *processNode, int memory[], int clock
         return 0;
     }
 }
-void virtualMemDeallocate(process_t *process, int deallocateAmt, int memory[],const int clock, pageFreeType_t type) {
+void virtualMemDeallocate(process_t *process, const int deallocateAmt, int memory[],const int clock, pageFreeType_t type) {
     char* tempStr = malloc(sizeof(char)*MAX_STRING_LENGTH);
     strcpy(tempStr, "\0");//set null string first
     if (process->pagedMemory.status == UNALLOCATED) {
@@ -347,7 +348,7 @@ void rrMemoryScheduler(processLL_t *processList, const int quantum, const memory
             if (currentNode->process->remainingTime <= 0 && currentNode->process->status == RUNNING) {
                 currentNode->process->completedTime = clock + quantum;
                 if(memoryType == FIRST_FIT) {
-                    firstFitDeallocate(currentNode->process, memory);
+                    blockMemDeallocate(currentNode->process, memory);
                 }
                 if(memoryType == PAGED){
                     pagedMemDeallocate(currentNode->process, memory, currentNode->process->completedTime);
@@ -380,7 +381,6 @@ void rrMemoryScheduler(processLL_t *processList, const int quantum, const memory
     destroyLL(finishedProcesses);
 }
 ////////////////ROUND ROBIN SCHEDULERS////////////////
-
 void printMemPage(const process_t *process) {
     int hasPrinted = 0; // Flag to check if any page has been printed
     int pageCount = MAXIMUM_MEMORY / PAGE_SIZE; // Calculate total number of pages once
